@@ -91,7 +91,7 @@
                 android:text="使用默认文件名保存歌词"
                 android:textAppearance="?attr/textAppearanceListItem" />
 
-            <com.google.android.material.switchmaterial.SwitchMaterial
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/useDefaultFilenameSwitch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
@@ -131,7 +131,7 @@
                     android:textAppearance="?attr/textAppearanceListItemSecondary" />
             </LinearLayout>
 
-            <com.google.android.material.switchmaterial.SwitchMaterial
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/useEnhancedLrcSwitch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
