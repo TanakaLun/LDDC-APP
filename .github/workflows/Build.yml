@@ -89,6 +89,6 @@ jobs:
         - name: 📤 Upload APK Artifact
           uses: actions/upload-artifact@v4
           with:
-            name: HookDemo-${{ steps.set_build_type.outputs.build_type }}
+            name: LDDC-${{ steps.set_build_type.outputs.build_type }}
             path: ${{ steps.build_info.outputs.apk_path }}
             retention-days: 7
