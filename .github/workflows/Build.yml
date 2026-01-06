@@ -1,99 +1,94 @@
-name: Build Android APK
+name: APK Build
 
-# 触发器 - 仅手动触发
 on:
+  push:
   workflow_dispatch:
     inputs:
-      version_tag:
-        description: "Version tag (e.g., v1.0.0)"
+      build_type:
+        type: choice
+        description: '选择编译类型'
         required: true
-        default: "v1.0.0"
-      release_title:
-        description: "Release Title"
-        required: true
-        default: "LDDC Release"
+        default: 'debug'
+        options:
+          - 'debug'
+          - 'release'
 
-# 设置工作流程权限
 permissions:
-  contents: write  # 允许创建release和上传文件
+  contents: read
+  actions: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      build_timestamp: ${{ steps.build_info.outputs.build_timestamp }}
+      build_type: ${{ steps.set_build_type.outputs.build_type }}
+    env:
+      NATIVE_TARGET: "arm64-v8a"
     steps:
-      # 1. 检出代码（需要获取完整的历史记录用于标签）
-      - name: Checkout code with full history
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # 获取完整git历史记录
-      
-      # 2. 创建并推送标签（先创建标签再创建release）
-      - name: Create and push tag
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          
-          # 检查标签是否已存在
-          if git rev-parse "${{ github.event.inputs.version_tag }}" >/dev/null 2>&1; then
-            echo "Tag ${{ github.event.inputs.version_tag }} already exists"
-          else
-            # 创建新标签
-            git tag "${{ github.event.inputs.version_tag }}"
-            # 推送标签到远程
-            git push origin "${{ github.event.inputs.version_tag }}"
-          fi
-      
-      # 3. 设置缓存以加速构建
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      
-      # 4. 设置JDK环境
-      - name: Setup JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-      
-      # 5. 设置Android SDK
-      # - name: Setup Android SDK
-      #  uses: android-actions/setup-android@v3
-      
-      # 6. 授予gradlew执行权限
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-      
-      # 7. 构建Debug版本
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
-      
-      # 8. 构建Release版本（无签名）
-      - name: Build Release APK (unsigned)
-        run: ./gradlew assembleRelease
-      
-      # 10. 上传APK文件到artifact
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          path:
-            ./app/build/outputs/apk/**/*.apk
-            ./**/*.apk
-      
-      # 11. 输出构建信息
-      - name: Display build info
-        run: |
-          echo "=== 构建完成 ==="
-          echo "版本标签: ${{ github.event.inputs.version_tag }}"
-          echo "Release标题: LDDC ${{ github.event.inputs.release_title }}"
-          echo ""
-          echo "生成的文件:"
-          ls -la ./app/build/outputs/apk/debug/
-          ls -la ./app/build/outputs/apk/release/
-          echo ""
-          echo "如果需要签名，请在gradle.properties中配置签名信息"
+        - name: ⬇️ Checkout Repository
+          uses: actions/checkout@v4
+        
+        - name: 🔧 设置构建类型
+          id: set_build_type
+          run: |
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "build_type=${{ github.event.inputs.build_type }}" >> $GITHUB_OUTPUT
+            else
+              echo "build_type=debug" >> $GITHUB_OUTPUT
+            fi
+            echo "构建类型: ${{ steps.set_build_type.outputs.build_type }}"
+    
+        - name: 🛠️ Set up Java
+          uses: actions/setup-java@v4
+          with:
+            distribution: 'temurin'
+            java-version: '17'
+    
+        - name: 💻 Set up Android SDK and NDK
+          uses: android-actions/setup-android@v3
+    
+        - name: ⚙️ Grant execute permission to gradlew
+          run: chmod +x gradlew
+    
+        - name: 🏗️ Build APK
+          run: |
+            if [ "${{ steps.set_build_type.outputs.build_type }}" = "release" ]; then
+              ./gradlew assembleRelease
+            else
+              ./gradlew assembleDebug
+            fi
+    
+        - name: 📦 Find APK file and rename
+          id: build_info
+          env:
+            COMMIT_ID: ${{ github.sha }}
+            BUILD_TYPE: ${{ steps.set_build_type.outputs.build_type }}
+          run: |
+            BUILD_TIMESTAMP=$(date +%s)
+            echo "build_timestamp=$BUILD_TIMESTAMP" >> $GITHUB_OUTPUT
+
+            # 根据构建类型选择正确的APK目录
+            if [ "$BUILD_TYPE" = "release" ]; then
+              APK_DIR="release"
+            else
+              APK_DIR="debug"
+            fi
+
+            ORIGINAL_APK_PATH=$(find ${{ github.workspace }}/app/build/outputs/apk/$APK_DIR/ -name "*.apk" | head -n 1)
+            COMMIT_ID_SHORT=${COMMIT_ID::7}
+            NEW_APK_NAME="HookDemo-${{ env.NATIVE_TARGET }}-${BUILD_TYPE}-${COMMIT_ID_SHORT}.apk"
+            
+            # 重命名 APK 文件
+            NEW_APK_DIR=$(dirname "$ORIGINAL_APK_PATH")
+            NEW_APK_PATH="$NEW_APK_DIR/$NEW_APK_NAME"
+            mv "$ORIGINAL_APK_PATH" "$NEW_APK_PATH"
+            echo "apk_path=$NEW_APK_PATH" >> $GITHUB_OUTPUT
+            echo "Found and renamed APK to: $NEW_APK_PATH"
+    
+        - name: 📤 Upload APK Artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: HookDemo-${{ steps.set_build_type.outputs.build_type }}
+            path: ${{ steps.build_info.outputs.apk_path }}
+            retention-days: 7
