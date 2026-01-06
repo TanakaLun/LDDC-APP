@@ -77,22 +77,10 @@ jobs:
       - name: Build Release APK (unsigned)
         run: ./gradlew assembleRelease
       
-      # 9. 创建Release（使用较新的版本）
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      # 10. 上传APK文件到artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ github.event.inputs.version_tag }}
-          name: LDDC ${{ github.event.inputs.release_title }}
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-      
-      # 10. 上传APK文件到Release
-      - name: Upload Debug APK
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.event.inputs.version_tag }}
           files: |
             ./app/build/outputs/apk/**/*.apk
             ./**/*.apk
