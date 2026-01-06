@@ -23,7 +23,7 @@ import androidx.fragment.app.Fragment
 import com.example.lldc.AboutActivity
 import com.example.lldc.R
 import com.example.lldc.util.SharedPrefsUtil
-import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.android.material.materialswitch.MaterialSwitch
 import android.widget.Toast
 
 class SettingsFragment : Fragment() {
@@ -33,8 +33,8 @@ class SettingsFragment : Fragment() {
     private lateinit var aboutLayout: LinearLayout
 
     private lateinit var apiServerUrlSummary: TextView
-    private lateinit var useDefaultFilenameSwitch: SwitchMaterial
-    private lateinit var useEnhancedLrcSwitch: SwitchMaterial
+    private lateinit var useDefaultFilenameSwitch: materialSwitch
+    private lateinit var useEnhancedLrcSwitch: materialSwitch
     private lateinit var lyricsPathTextView: TextView
     private lateinit var filePickerSpinner: Spinner
 
