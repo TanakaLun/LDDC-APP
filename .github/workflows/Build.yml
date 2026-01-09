@@ -86,11 +86,11 @@ jobs:
           cp "$GRADLE_FILE" "${GRADLE_FILE}.bak"
             
           # 使用 sed 替换 versionCode 和 versionName
-          # 匹配格式: versionCode 1 或 versionCode = 1
-          sed -i "s/versionCode\s*[0-9]*/versionCode ${{ steps.version_info.outputs.version_code }}/g" "$GRADLE_FILE"
-            
-          # 匹配格式: versionName "xxx" 或 versionName = "xxx"
-          sed -i "s/versionName\s*\".*\"/versionName \"${{ steps.version_info.outputs.version_name }}\"/g" "$GRADLE_FILE"
+          sed -i -E "s/versionCode[[:space:]]*=[[:space:]]*[0-9]+/versionCode = ${{ steps.version_info.outputs.version_code }}/g" "$GRADLE_FILE"
+          sed -i -E "s/versionCode[[:space:]]+[0-9]+/versionCode ${{ steps.version_info.outputs.version_code }}/g" "$GRADLE_FILE"
+          
+          sed -i -E "s/versionName[[:space:]]*=[[:space:]]*\"[^\"]*\"/versionName = \"${{ steps.version_info.outputs.version_name }}\"/g" "$GRADLE_FILE"
+          sed -i -E "s/versionName[[:space:]]+\"[^\"]*\"/versionName \"${{ steps.version_info.outputs.version_name }}\"/g" "$GRADLE_FILE"
             
           echo "Modified versionCode to: ${{ steps.version_info.outputs.version_code }}"
           echo "Modified versionName to: ${{ steps.version_info.outputs.version_name }}"
@@ -193,11 +193,11 @@ jobs:
           cp "$GRADLE_FILE" "${GRADLE_FILE}.bak"
             
           # 使用 sed 替换 versionCode 和 versionName
-          # 匹配格式: versionCode 1 或 versionCode = 1
-          sed -i "s/versionCode\s*[0-9]*/versionCode ${{ steps.version_info.outputs.version_code }}/g" "$GRADLE_FILE"
-            
-          # 匹配格式: versionName "xxx" 或 versionName = "xxx"
-          sed -i "s/versionName\s*\".*\"/versionName \"${{ steps.version_info.outputs.version_name }}\"/g" "$GRADLE_FILE"
+          sed -i -E "s/versionCode[[:space:]]*=[[:space:]]*[0-9]+/versionCode = ${{ steps.version_info.outputs.version_code }}/g" "$GRADLE_FILE"
+          sed -i -E "s/versionCode[[:space:]]+[0-9]+/versionCode ${{ steps.version_info.outputs.version_code }}/g" "$GRADLE_FILE"
+          
+          sed -i -E "s/versionName[[:space:]]*=[[:space:]]*\"[^\"]*\"/versionName = \"${{ steps.version_info.outputs.version_name }}\"/g" "$GRADLE_FILE"
+          sed -i -E "s/versionName[[:space:]]+\"[^\"]*\"/versionName \"${{ steps.version_info.outputs.version_name }}\"/g" "$GRADLE_FILE"
             
           echo "Modified versionCode to: ${{ steps.version_info.outputs.version_code }}"
           echo "Modified versionName to: ${{ steps.version_info.outputs.version_name }}"
